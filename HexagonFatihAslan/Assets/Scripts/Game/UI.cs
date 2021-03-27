@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class UI : MonoBehaviour
 {
     [SerializeField]
-    Text Score, Move;
+    Text Score, Move, HintButton;
     [SerializeField]
     GameObject GameOverPanel;
 
@@ -25,5 +25,11 @@ public class UI : MonoBehaviour
         Global.BombSpawned = false;
         Global.TotalBombsSpawned = 0;
         SceneManager.LoadScene(0);
+    }
+
+    public void Hints()
+    {
+        HintButton.text = Global.Hints ? "Enable Hints" : "Disable Hints";
+        Global.Hints = !Global.Hints;
     }
 }

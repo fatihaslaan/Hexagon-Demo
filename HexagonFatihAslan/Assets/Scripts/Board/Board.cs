@@ -1,24 +1,33 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Board : MonoBehaviour
 {
 
+    public AudioSource MatchSound;
+
     public int Width = 8;    //I didnt use hexagon tilemap, because when you use TileMap.SetTile() and assign a gameobject to that tile,
     public int Height = 9;   //all of tiles using same gameobject and also same cell script (same values in all of them). You can prevent this by cloning that object but then you will have two cell
-    public float CellSize = 0.1f;
     public int SpawnBombLimit = 1000;   //new bomb for every 1000 score
+    public float CellSize = 0.1f;
 
     [SerializeField]
-    GameObject CellObject, CenterSphereObj, test;
+    GameObject CellObject, CenterSphereObj, HintObj;
     GameObject TempCell, TempCenterObj;
+    List<GameObject> HintObjects = new List<GameObject>();
 
     Cell[,] Cells;
     Cell[] SelectedCells = new Cell[3]; //selected group
+    List<Cell> Matches = new List<Cell>();  //matched cells
 
     bool Rotating = false;  //is group rotating
     bool BoardChecked = false;
+    bool MatchDestroy = false;
+    bool HintShowed = false;
+    float HintTimer = 2f;
+    float MatchDestroyDelay;
     float RotateDuration = 0.9f;    //rotate duration of selected group
     float TempRotateDuration;
     float RotateAngle = 360f;
@@ -96,67 +105,20 @@ public class Board : MonoBehaviour
                             groupcount++;
                             if (groupcount == neighborcellsgroup.Count)     //if yes than return or game will end
                             {
-                                //Instantiate(test, neighborcells.transform.position, Quaternion.identity);     //this is for test for me to see which items can match in board
-                                //Instantiate(test, c.transform.position, Quaternion.identity);                 //could be used as Hint in game 
-                                return;
+                                if (Global.Hints)
+                                {
+                                    HintObjects.Add(Instantiate(HintObj, neighborcells.transform.position, Quaternion.identity)); //this was a test for me to see which items can match in board
+                                    HintObjects.Add(Instantiate(HintObj, c.transform.position, Quaternion.identity));
+                                }
+                                return; //remove this line for more than two hints
                             }
                         }
                     }
                 }
             }
         }
-        Global.GameOver = true;
-    }
-
-    void Update()
-    {
-        if (BoardReady())
-        {
-            if (!BoardChecked)
-            {
-                BoardChecked = true;
-                CheckBoard(true);   //check whole board for any matches
-                IsGameOver();
-            }
-        }
-        if (Global.Slide)   //slide
-        {
-            Global.Slide = false;
-            if (TempCenterObj)
-            {
-                Rotating = true;
-                TempRotateDuration = RotateDuration / 3;    //rotate 3 times to find any match
-                RotateCount = 0;
-            }
-        }
-        if (Rotating)
-        {
-            if (!Global.RotateClockWise)
-                RotateAngle = 360f;
-            else
-                RotateAngle = -360f;
-            TempRotateDuration -= Time.deltaTime;
-
-            if (TempRotateDuration <= 0)
-            {
-                RotateCount++;
-                if (RotateCount <= 3)
-                {
-                    TempRotateDuration = RotateDuration / 3;
-                    RotateGroup(Global.RotateClockWise ? 1 : -1);   //rotate and find matches
-                }
-                else
-                {
-                    Rotating = false;
-                }
-            }
-            if (Rotating)
-            {
-                TempCenterObj.transform.RotateAround(TempCenterObj.transform.position, Vector3.forward, RotateAngle * Time.deltaTime / RotateDuration);
-            }
-            else
-                TempCenterObj.transform.rotation = Quaternion.Euler(0, 0, 0);
-        }
+        if (HintObjects.Count == 0)
+            Global.GameOver = true;
     }
 
     void RotateGroup(int direction)
@@ -191,7 +153,7 @@ public class Board : MonoBehaviour
             CellsToCheck = SelectedCells;
 
         bool Matched = false;
-        List<Cell> Matches = new List<Cell>();  //matched cells
+        Matches = new List<Cell>();
         foreach (Cell cell in CellsToCheck)
         {
             foreach (List<Cell> group in cell.NeighBorGroupCells)   //get groups of cell
@@ -218,10 +180,7 @@ public class Board : MonoBehaviour
         {
             Matched = false;
             Rotating = false;
-            foreach (Cell cell in Matches)
-            {
-                cell.DestroyCurrentItem();
-            }
+            MatchDestroyDelay = 0.5f;
             if (!All)
                 Global.Move++;  //we matched selected group not all board
         }
@@ -233,11 +192,95 @@ public class Board : MonoBehaviour
         Destroy(TempCenterObj);
     }
 
+    void RemoveHints()  //disable hints
+    {
+        HintTimer = 5f;
+        for (int i = 0; i < HintObjects.Count; i++)
+            Destroy(HintObjects[i]);
+        HintObjects = new List<GameObject>();
+        HintShowed = false;
+    }
+
+    void Update()
+    {
+        HintTimer -= Time.deltaTime;
+        if (HintTimer < 0 && !HintShowed)   //enable hints
+        {
+            foreach (GameObject h in HintObjects)
+                h.SetActive(true);
+            HintShowed = true;
+        }
+
+        if (MatchDestroyDelay > 0)  //matched object's destroyment delay
+        {
+            MatchDestroy = true;
+            MatchDestroyDelay -= Time.deltaTime;
+        }
+        else if (MatchDestroy)
+        {
+            MatchDestroy = false;
+            MatchSound.Play();      //sound
+            foreach (Cell c in Matches)
+                c.DestroyCurrentItem();
+            RemoveHints();
+        }
+
+        if (BoardReady())
+        {
+            if (!BoardChecked)
+            {
+                BoardChecked = true;
+                CheckBoard(true);   //check whole board for any matches
+                IsGameOver();
+            }
+        }
+        
+        if (Global.Slide)   //slide
+        {
+            Global.Slide = false;
+            if (TempCenterObj)
+            {
+                Rotating = true;
+                TempRotateDuration = RotateDuration / 3;    //rotate 3 times to find any match
+                RotateCount = 0;
+            }
+        }
+
+        if (Rotating)
+        {
+            if (!Global.RotateClockWise)
+                RotateAngle = 360f;
+            else
+                RotateAngle = -360f;
+            TempRotateDuration -= Time.deltaTime;
+
+            if (TempRotateDuration <= 0)
+            {
+                RotateCount++;
+                if (RotateCount <= 3)
+                {
+                    TempRotateDuration = RotateDuration / 3;
+                    RotateGroup(Global.RotateClockWise ? 1 : -1);   //rotate and find matches
+                }
+                else
+                {
+                    Rotating = false;
+                }
+            }
+            if (Rotating)
+            {
+                TempCenterObj.transform.RotateAround(TempCenterObj.transform.position, Vector3.forward, RotateAngle * Time.deltaTime / RotateDuration);
+            }
+            else
+                TempCenterObj.transform.rotation = Quaternion.Euler(0, 0, 0);
+        }
+    }
+
     public void CellPressed(int cellx, int celly, float hitx, float hity)
     {
         if (Rotating)
             return;
-
+        RemoveHints();
         Vector3 hit = new Vector3(hitx, hity, 0);   //touch pos
         Vector3 Center = new Vector3(0, 0, 0);
         Vector3 tempCenter = new Vector3(0, 0, 0);
@@ -265,12 +308,12 @@ public class Board : MonoBehaviour
 
                 if (Global.DirectionOfSelectedGroupObject(SelectedCells))   //direction
                 {
-                    Center = new Vector3(tempCenter.x + CellObject.transform.localScale.x, tempCenter.y, tempCenter.z-1);
+                    Center = new Vector3(tempCenter.x + CellObject.transform.localScale.x, tempCenter.y, tempCenter.z - 1);
                     CenterSphereObj.GetComponent<SpriteRenderer>().flipX = false;
                 }
                 else
                 {
-                    Center = new Vector3(tempCenter.x - CellObject.transform.localScale.x, tempCenter.y, tempCenter.z-1);
+                    Center = new Vector3(tempCenter.x - CellObject.transform.localScale.x, tempCenter.y, tempCenter.z - 1);
                     CenterSphereObj.GetComponent<SpriteRenderer>().flipX = true;
                 }
 

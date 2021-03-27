@@ -5,6 +5,7 @@ using UnityEngine;
 public static class Global
 {
     public static bool GameOver=false;
+    public static bool Hints=true;
 
     public static int GameScore=0;
     public static int Move=0;

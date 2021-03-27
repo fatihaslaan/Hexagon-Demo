@@ -2,11 +2,13 @@
 
 public abstract class Item : MonoBehaviour
 {
+    float speed;
+
     void Update()
     {
-        if (transform.localPosition.y <=0)  //fall
+        if (transform.localPosition.y <= 0)  //fall
         {
-            transform.localPosition=Vector3.zero;
+            transform.localPosition = Vector3.zero;
             return;
         }
         else
@@ -15,7 +17,7 @@ public abstract class Item : MonoBehaviour
 
     float DropSpeed()   //speed of fall
     {
-        float speed=((15f/(transform.parent.GetComponent<Cell>().CellY+1))+(15f/(transform.parent.GetComponent<Cell>().CellX+1)));
+        speed = ((20f / (transform.parent.GetComponent<Cell>().CellY + 1)) + (20f / (transform.parent.GetComponent<Cell>().CellX + 1)));
         return speed;
     }
 

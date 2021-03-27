@@ -16,7 +16,7 @@ public static class Global
     
     static int[,] IsCellEven(int x,int BoardWidth) //to determine if next cell upright or downright
     {
-        if(x%2==BoardWidth%2)
+        if(x%2==0)
             return new int[6,2] {{0,1},{1,1},{1,0},{0,-1},{-1,0},{-1,1}};
         else
             return new int[6,2] {{0,1},{1,0},{1,-1},{0,-1},{-1,-1},{-1,0}};

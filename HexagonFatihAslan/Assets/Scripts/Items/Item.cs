@@ -15,7 +15,7 @@ public abstract class Item : MonoBehaviour
 
     float DropSpeed()   //speed of fall
     {
-        float speed=((5f/(transform.parent.GetComponent<Cell>().CellY+1))+(5f/(transform.parent.GetComponent<Cell>().CellX+1)));
+        float speed=((15f/(transform.parent.GetComponent<Cell>().CellY+1))+(15f/(transform.parent.GetComponent<Cell>().CellX+1)));
         return speed;
     }
 

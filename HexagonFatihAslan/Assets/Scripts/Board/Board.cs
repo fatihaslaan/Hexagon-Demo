@@ -265,12 +265,12 @@ public class Board : MonoBehaviour
 
                 if (Global.DirectionOfSelectedGroupObject(SelectedCells))   //direction
                 {
-                    Center = new Vector3(tempCenter.x + CellObject.transform.localScale.x, tempCenter.y, tempCenter.z);
+                    Center = new Vector3(tempCenter.x + CellObject.transform.localScale.x, tempCenter.y, tempCenter.z-1);
                     CenterSphereObj.GetComponent<SpriteRenderer>().flipX = false;
                 }
                 else
                 {
-                    Center = new Vector3(tempCenter.x - CellObject.transform.localScale.x, tempCenter.y, tempCenter.z);
+                    Center = new Vector3(tempCenter.x - CellObject.transform.localScale.x, tempCenter.y, tempCenter.z-1);
                     CenterSphereObj.GetComponent<SpriteRenderer>().flipX = true;
                 }
 

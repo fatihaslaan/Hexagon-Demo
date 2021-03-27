@@ -1,37 +1,24 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 public class Cell : MonoBehaviour
 {
     public Color CurrentItemColor;
+    public GameObject CurrentItem;
+
+    public List<List<Cell>> NeighBorGroupCells; //neighbor groups
+    public Cell UpperCell;
+
+    float CorX, CorY;   //cell coordinates
+    public int CellX, CellY;   //cell grid coordinates
+
     GameObject Parent;
-    float CorX, CorY;
-    int CellX, CellY;
-    GameObject CurrentItem;
 
-    Board GameBoard;
-    Items AllItems;
-    Colors AllColors;
+    Board GameBoard;    //for getting board
+    Items AllItems;     //for getting items
+    Colors AllColors;   //for getting colors
 
-    void OnMouseUpAsButton()
-    {
-
-    }
-
-    void SetItem()
-    {
-        CurrentItem = Instantiate(AllItems.GetHexagon(), new Vector3(CorX, CorY, 0), Quaternion.identity);
-        CurrentItem.transform.SetParent(transform);
-        do
-        {
-            CurrentItemColor=AllColors.ColorList[Random.Range(0,AllColors.ColorList.Count)];
-        }while(!GameBoard.CanUseColor(CellX,CellY,CurrentItemColor));
-        CurrentItem.GetComponent<Hexagon>().SetColor(CurrentItemColor);
-    }
-
-    public void Setup(int cellx, int celly)
+    void CellSetup(int cellx, int celly)
     {
         CorX = transform.position.x;
         CorY = transform.position.y;
@@ -41,6 +28,109 @@ public class Cell : MonoBehaviour
         AllItems = Parent.GetComponent<Items>();
         AllColors = Parent.GetComponent<Colors>();
         GameBoard = Parent.GetComponent<Board>();
-        SetItem();
+    }
+
+    void ItemSetUp()
+    {
+        GameObject SpawnObj=AllItems.GetHexagon();
+        if (Global.GameScore>GameBoard.SpawnBombLimit*(1+Global.TotalBombsSpawned))
+        {
+            if (!Global.BombSpawned)
+            {
+                SpawnObj=AllItems.GetBomb();
+                Global.BombSpawned = true;
+                Global.TotalBombsSpawned++;
+            }
+        }
+        else
+            Global.BombSpawned = false;
+        int colorcounter = 0;
+        CurrentItem = Instantiate(SpawnObj, new Vector3(CorX, CorY + AllItems.DropHeight(), 0), Quaternion.identity);  //start with hexagons
+        //CurrentItem.transform.localScale = transform.localScale;  //change items scale to ownercells scale, can modify cell size without any problem with this line (not working due to bomb item right now), also move this line to setitem to be able to make diffirent sized cells
+        CurrentItem.transform.SetParent(transform);
+        do
+        {
+            /*TEST
+            int a=Random.Range(0,2);
+            if(a==0)
+                CurrentItemColor=Color.red;
+            else if(a==1)
+                CurrentItemColor=Color.green;
+            else
+                CurrentItemColor=Color.blue;
+            */
+            if (colorcounter >= 1000)
+            {
+                Debug.Log("Not Enough Color");
+                return;
+            }
+            colorcounter++;
+            CurrentItemColor = AllColors.ColorList[Random.Range(0, AllColors.ColorList.Count)];
+        } while (!CanUseColor());
+        CurrentItem.GetComponent<Item>().SetColor(CurrentItemColor);
+    }
+
+    bool CanUseColor()  //check if cell can use that color to spawn an object
+    {
+        foreach (List<Cell> group in NeighBorGroupCells)
+        {
+            int groupcount = 0;
+            foreach (Cell cell in group)
+            {
+                if (cell.CurrentItemColor != CurrentItemColor)
+                    break;
+                groupcount++;
+                if (groupcount == group.Count)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    void Update()   //getting upper cells item
+    {
+        while (!CurrentItem)
+        {
+            if (UpperCell)
+                if (UpperCell.CurrentItem)
+                {
+                    SetItem(UpperCell.CurrentItem,true);
+                    UpperCell.CurrentItem = null;
+                }
+                else
+                    return;
+            else
+                ItemSetUp();
+        }
+    }
+
+    public void Setup(int cellx, int celly)
+    {
+        CellSetup(cellx, celly);
+        ItemSetUp();
+    }
+
+    public void SetItem(GameObject Item,bool fall)  //set new item while rotating and falling
+    {
+        CurrentItem = Item;        
+        CurrentItemColor = CurrentItem.GetComponent<Item>().GetColor();
+        CurrentItem.transform.SetParent(transform);
+        if(!fall)
+            CurrentItem.transform.localPosition = Vector3.zero;
+    }
+
+    public void Pressed(float x, float y)
+    {
+        GameBoard.CellPressed(CellX, CellY, x, y);
+    }
+
+    public void DestroyCurrentItem()
+    {
+        if (CurrentItem)
+        {
+            Global.GameScore += CurrentItem.GetComponent<Item>().Score();
+            CurrentItemColor = Color.clear;
+            Destroy(CurrentItem);
+        }
     }
 }

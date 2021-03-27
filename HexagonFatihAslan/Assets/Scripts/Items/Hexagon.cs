@@ -1,8 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class Hexagon : Item
+﻿public class Hexagon : Item
 {
- 
+    public override int Score()
+    {
+        return 5;
+    }
 }

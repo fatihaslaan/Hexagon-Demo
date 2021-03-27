@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Items : MonoBehaviour
 {
@@ -9,8 +7,18 @@ public class Items : MonoBehaviour
 
     public GameObject GetHexagon()
     {
-        GameObject hex=Hexagon;
+        GameObject hex = Hexagon;
         return hex;
     }
 
+    public GameObject GetBomb()
+    {
+        GameObject bomb = Bomb;
+        return bomb;
+    }
+
+    public float DropHeight()
+    {
+        return Screen.height / 35;  //fall height of spawned objects;
+    }
 }

@@ -22,6 +22,7 @@ public class Board : MonoBehaviour
     Cell[] SelectedCells = new Cell[3]; //selected group
     List<Cell> Matches = new List<Cell>();  //matched cells
 
+	bool AutoMatch=false;
     bool Rotating = false;  //is group rotating
     bool BoardChecked = false;
     bool MatchDestroy = false;
@@ -181,8 +182,7 @@ public class Board : MonoBehaviour
             Matched = false;
             Rotating = false;
             MatchDestroyDelay = 0.5f;
-            if (!All)
-                Global.Move++;  //we matched selected group not all board
+			AutoMatch=All;
         }
     }
 
@@ -223,6 +223,8 @@ public class Board : MonoBehaviour
             foreach (Cell c in Matches)
                 c.DestroyCurrentItem();
             RemoveHints();
+			if(!AutoMatch)
+				Global.Move++;	//we matched selected group not all board
         }
 
         if (BoardReady())

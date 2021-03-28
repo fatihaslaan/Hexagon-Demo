@@ -33,17 +33,11 @@ public class Cell : MonoBehaviour
     void ItemSetUp()
     {
         GameObject SpawnObj=AllItems.GetHexagon();
-        if (Global.GameScore>GameBoard.SpawnBombLimit*(1+Global.TotalBombsSpawned))
+        if (Global.GameScore / (GameBoard.SpawnBombLimit * (1 + Global.TotalBombsSpawned))>0)
         {
-            if (!Global.BombSpawned)
-            {
-                SpawnObj=AllItems.GetBomb();
-                Global.BombSpawned = true;
-                Global.TotalBombsSpawned++;
-            }
+            SpawnObj = AllItems.GetBomb();
+            Global.TotalBombsSpawned++;
         }
-        else
-            Global.BombSpawned = false;
         int colorcounter = 0;
         CurrentItem = Instantiate(SpawnObj, new Vector3(CorX, CorY + AllItems.DropHeight(), 0), Quaternion.identity);  //start with hexagons
         //CurrentItem.transform.localScale = transform.localScale;  //change items scale to ownercells scale, can modify cell size without any problem with this line (not working due to bomb item right now), also move this line to setitem to be able to make diffirent sized cells
@@ -112,7 +106,7 @@ public class Cell : MonoBehaviour
 
     public void SetItem(GameObject Item,bool fall)  //set new item while rotating and falling
     {
-        CurrentItem = Item;        
+        CurrentItem = Item;
         CurrentItemColor = CurrentItem.GetComponent<Item>().GetColor();
         CurrentItem.transform.SetParent(transform);
         if(!fall)

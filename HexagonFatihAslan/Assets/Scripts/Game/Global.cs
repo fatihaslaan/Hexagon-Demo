@@ -9,7 +9,6 @@ public static class Global
 
     public static int GameScore=0;
     public static int Move=0;
-    public static bool BombSpawned=false;
     public static int TotalBombsSpawned=0;
 
     public static float SelectedGroupObjectx;

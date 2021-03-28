@@ -22,7 +22,6 @@ public class UI : MonoBehaviour
         Global.GameOver = false;
         Global.GameScore = 0;
         Global.Move = 0;
-        Global.BombSpawned = false;
         Global.TotalBombsSpawned = 0;
         SceneManager.LoadScene(0);
     }
